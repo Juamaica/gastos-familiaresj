@@ -263,18 +263,37 @@
     // Nota: si supabaseClient.js define "supabase" como el cliente,
     // considerá renombrarlo a "supabaseClient" para evitar pisar el
     // global que crea la librería @supabase/supabase-js.
-    if (typeof supabase !== "undefined") {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          window.location.href = "index.html";
-          return;
-        }
-        loginWrapper.classList.add("ready");
-      }).catch(() => {
-        loginWrapper.classList.add("ready");
-      });
-    } else {
+
+    let yaSeReveló = false;
+    function revelarFormulario() {
+      if (yaSeReveló) return;
+      yaSeReveló = true;
       loginWrapper.classList.add("ready");
+    }
+
+    // Red de seguridad: pase lo que pase, a más tardar en 1.5s se muestra el formulario.
+    // Esto evita que un error en supabaseClient.js / auth.js deje la página en blanco.
+    setTimeout(revelarFormulario, 1500);
+
+    try {
+      if (typeof supabase !== "undefined" && supabase && supabase.auth) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            window.location.href = "index.html";
+            return;
+          }
+          revelarFormulario();
+        }).catch((err) => {
+          console.error("Error comprobando sesión:", err);
+          revelarFormulario();
+        });
+      } else {
+        console.warn("La variable 'supabase' no está definida. Revisá supabaseClient.js");
+        revelarFormulario();
+      }
+    } catch (err) {
+      console.error("Error inesperado al comprobar sesión:", err);
+      revelarFormulario();
     }
 
   });
