@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ingresar — Gastos Familiares</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .login-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--color-border);
+      padding: 2rem;
+      width: 100%;
+      max-width: 380px;
+    }
+    .login-card h1 {
+      font-family: var(--font-display);
+      color: var(--color-primary-dark);
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .login-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .login-tab {
+      flex: 1;
+      padding: 0.6rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--color-text-light);
+      border-bottom: 2px solid transparent;
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .login-tab.active {
+      color: var(--color-primary-dark);
+      border-color: var(--color-secondary);
+    }
+    .login-form { display: none; flex-direction: column; gap: 1rem; }
+    .login-form.active { display: flex; }
+    .login-form .btn { width: 100%; }
+  </style>
+</head>
+<body>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+      <h1>💰 Gastos Familiares</h1>
+
+      <div class="login-tabs">
+        <button type="button" class="login-tab active" id="tabIngresar">Iniciar sesión</button>
+        <button type="button" class="login-tab" id="tabRegistrar">Registrarse</button>
+      </div>
+
+      <form id="formIngresar" class="login-form active">
+        <div class="form-group">
+          <label for="emailIngresar">Correo</label>
+          <input type="email" id="emailIngresar" required placeholder="tucorreo@ejemplo.com" />
+        </div>
+        <div class="form-group">
+          <label for="passwordIngresar">Contraseña</label>
+          <input type="password" id="passwordIngresar" required placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn btn--primary">Iniciar sesión</button>
+      </form>
+
+      <form id="formRegistrar" class="login-form">
+        <div class="form-group">
+          <label for="emailRegistrar">Correo</label>
+          <input type="email" id="emailRegistrar" required placeholder="tucorreo@ejemplo.com" />
+        </div>
+        <div class="form-group">
+          <label for="passwordRegistrar">Contraseña</label>
+          <input type="password" id="passwordRegistrar" required minlength="6" placeholder="Mínimo 6 caracteres" />
+        </div>
+        <button type="submit" class="btn btn--primary">Crear cuenta</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Si ya hay sesión activa, mandar directo al dashboard
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) window.location.href = "index.html";
+    });
+
+    const tabIngresar = document.getElementById("tabIngresar");
+    const tabRegistrar = document.getElementById("tabRegistrar");
+    const formIngresar = document.getElementById("formIngresar");
+    const formRegistrar = document.getElementById("formRegistrar");
+
+    tabIngresar.addEventListener("click", () => {
+      tabIngresar.classList.add("active");
+      tabRegistrar.classList.remove("active");
+      formIngresar.classList.add("active");
+      formRegistrar.classList.remove("active");
+    });
+
+    tabRegistrar.addEventListener("click", () => {
+      tabRegistrar.classList.add("active");
+      tabIngresar.classList.remove("active");
+      formRegistrar.classList.add("active");
+      formIngresar.classList.remove("active");
+    });
+
+    formIngresar.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("emailIngresar").value.trim();
+      const password = document.getElementById("passwordIngresar").value;
+
+      const { error } = await iniciarSesion(email, password);
+      if (error) return mostrarToast("Error al iniciar sesión: " + error.message, "error");
+
+      mostrarToast("Sesión iniciada", "exito");
+      window.location.href = "index.html";
+    });
+
+    formRegistrar.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("emailRegistrar").value.trim();
+      const password = document.getElementById("passwordRegistrar").value;
+
+      const { error } = await registrar(email, password);
+      if (error) return mostrarToast("Error al registrar: " + error.message, "error");
+
+      mostrarToast("Cuenta creada, ya puedes ingresar", "exito");
+      tabIngresar.click();
+    });
+  </script>
+</body>
+</html>
