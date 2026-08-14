@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gastos Familiares</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -22,102 +25,165 @@
       <a href="#dashboard" class="nav__link">Dashboard</a>
       <a href="#nuevo-gasto" class="nav__link">Nuevo gasto</a>
       <a href="#lista-gastos" class="nav__link">Mis gastos</a>
+      <a href="#" class="nav__link" id="btnCerrarSesion">Cerrar sesión</a>
     </nav>
   </header>
 
   <main class="main">
 
-    <!-- SECCIÓN: FOTO FAMILIAR -->
-    <section class="familia-card">
-      <div class="familia-card__foto">
+    <!-- SECCIÓN: FRANJA FAMILIAR -->
+    <section class="familia-strip">
+      <div class="familia-strip__foto">
         <img id="fotoFamiliar" src="" alt="Foto familiar" />
       </div>
-      <div class="familia-card__info">
-        <h2 id="nombreFamilia">Mi Familia</h2>
-        <label class="btn btn--secondary" for="inputFoto">Subir / cambiar foto</label>
-        <input type="file" id="inputFoto" accept="image/*" hidden />
+      <h2 id="nombreFamilia" class="familia-strip__nombre">Mi Familia</h2>
+      <div class="perfil-activo" id="perfilActivoBadge">
+        <span class="perfil-activo__avatar" id="perfilActivoAvatar">👤</span>
+        <span class="perfil-activo__nombre" id="perfilActivoNombre">Elegir perfil</span>
       </div>
+      <label class="btn btn--secondary btn--small" for="inputFoto">Cambiar foto</label>
+      <input type="file" id="inputFoto" accept="image/*" hidden />
     </section>
+
+    <!-- MODAL: SELECTOR DE PERFIL (estilo Netflix) -->
+    <div class="perfil-modal-overlay" id="perfilModalOverlay" hidden>
+      <div class="perfil-modal">
+        <h2>¿Quién eres?</h2>
+        <p>Elige tu perfil para registrar los gastos a tu nombre</p>
+        <div class="perfil-modal__grid" id="perfilModalGrid">
+          <!-- botones generados por JS -->
+        </div>
+      </div>
+    </div>
 
     <!-- DASHBOARD -->
     <section id="dashboard" class="dashboard">
       <h2 class="section-title">Dashboard</h2>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-card__label">Total gastado</span>
-          <span class="stat-card__value" id="statTotal">Bs. 0</span>
+      <!-- Línea de totales tipo recibo -->
+      <div class="stats-strip">
+        <div class="stat-item">
+          <span class="stat-item__label">Total gastado</span>
+          <span class="stat-item__value" id="statTotal">Bs. 0</span>
         </div>
-        <div class="stat-card">
-          <span class="stat-card__label">Gastos este mes</span>
-          <span class="stat-card__value" id="statMes">Bs. 0</span>
+        <div class="stat-item">
+          <span class="stat-item__label">Gastos este mes</span>
+          <span class="stat-item__value" id="statMes">Bs. 0</span>
         </div>
-        <div class="stat-card">
-          <span class="stat-card__label">N° de registros</span>
-          <span class="stat-card__value" id="statCantidad">0</span>
+        <div class="stat-item">
+          <span class="stat-item__label">N° de registros</span>
+          <span class="stat-item__value" id="statCantidad">0</span>
         </div>
-        <div class="stat-card">
-          <span class="stat-card__label">Categoría top</span>
-          <span class="stat-card__value" id="statCategoriaTop">-</span>
+        <div class="stat-item">
+          <span class="stat-item__label">Categoría top</span>
+          <span class="stat-item__value" id="statCategoriaTop">-</span>
         </div>
       </div>
 
-      <div class="categorias-breakdown">
-        <h3 class="section-subtitle">Gastos por categoría</h3>
-        <div id="categoriasContainer"></div>
+      <!-- Dos columnas: categorías | ficha de nuevo gasto -->
+      <div class="dashboard-columns">
+
+        <div class="categorias-breakdown">
+          <h3 class="section-subtitle">Gastos por categoría</h3>
+          <div id="categoriasContainer"></div>
+
+          <h3 class="section-subtitle" style="margin-top:1.4rem;">Gastos por miembro de familia</h3>
+          <div id="miembrosContainer"></div>
+        </div>
+
+        <!-- FORMULARIO NUEVO GASTO (ficha) -->
+        <section id="nuevo-gasto" class="form-section">
+          <h3 class="section-subtitle">Registrar nuevo gasto</h3>
+          <form id="formGasto" class="form-gasto">
+            <input type="hidden" id="gastoId" />
+
+            <div class="form-group">
+              <label for="descripcion">Descripción</label>
+              <input type="text" id="descripcion" required placeholder="Ej: Compra supermercado" />
+            </div>
+
+            <div class="form-group">
+              <label for="monto">Monto (Bs.)</label>
+              <input type="number" id="monto" step="0.01" min="0" required placeholder="0.00" />
+            </div>
+
+            <div class="form-group">
+              <label for="categoriaDisplay">Categoría</label>
+              <div class="select-picker" id="categoriaPicker">
+                <button type="button" class="select-picker__input" id="categoriaDisplay"></button>
+                <select id="categoria" hidden>
+                  <option value="Alimentación">Alimentación</option>
+                  <option value="Transporte">Transporte</option>
+                  <option value="Servicios">Servicios</option>
+                  <option value="Salud">Salud</option>
+                  <option value="Educación">Educación</option>
+                  <option value="Entretenimiento">Entretenimiento</option>
+                  <option value="Otros">Otros</option>
+                </select>
+                <div class="select-picker__panel" id="categoriaPanel" hidden></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="fechaDisplay">Fecha</label>
+              <div class="date-picker" id="datePicker">
+                <button type="button" class="date-picker__input" id="fechaDisplay"></button>
+                <input type="hidden" id="fecha" required />
+                <div class="date-picker__panel" id="datePanel" hidden>
+                  <div class="date-picker__header">
+                    <button type="button" class="date-picker__nav" id="dpPrev" aria-label="Mes anterior">‹</button>
+                    <span id="dpMonthLabel"></span>
+                    <button type="button" class="date-picker__nav" id="dpNext" aria-label="Mes siguiente">›</button>
+                  </div>
+                  <div class="date-picker__weekdays">
+                    <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+                  </div>
+                  <div class="date-picker__grid" id="dpGrid"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary" id="btnGuardar">Guardar gasto</button>
+              <button type="button" class="btn btn--ghost" id="btnCancelar" hidden>Cancelar edición</button>
+            </div>
+          </form>
+        </section>
+
       </div>
-    </section>
-
-    <!-- FORMULARIO NUEVO GASTO -->
-    <section id="nuevo-gasto" class="form-section">
-      <h2 class="section-title">Registrar nuevo gasto</h2>
-      <form id="formGasto" class="form-gasto">
-        <input type="hidden" id="gastoId" />
-
-        <div class="form-group">
-          <label for="descripcion">Descripción</label>
-          <input type="text" id="descripcion" required placeholder="Ej: Compra supermercado" />
-        </div>
-
-        <div class="form-group">
-          <label for="monto">Monto (Bs.)</label>
-          <input type="number" id="monto" step="0.01" min="0" required placeholder="0.00" />
-        </div>
-
-        <div class="form-group">
-          <label for="categoria">Categoría</label>
-          <select id="categoria">
-            <option value="Alimentación">Alimentación</option>
-            <option value="Transporte">Transporte</option>
-            <option value="Servicios">Servicios</option>
-            <option value="Salud">Salud</option>
-            <option value="Educación">Educación</option>
-            <option value="Entretenimiento">Entretenimiento</option>
-            <option value="Otros">Otros</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="fecha">Fecha</label>
-          <input type="date" id="fecha" required />
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn btn--primary" id="btnGuardar">Guardar gasto</button>
-          <button type="button" class="btn btn--ghost" id="btnCancelar" hidden>Cancelar edición</button>
-        </div>
-      </form>
     </section>
 
     <!-- LISTA DE GASTOS -->
     <section id="lista-gastos" class="lista-section">
-      <h2 class="section-title">Mis gastos</h2>
+      <div class="lista-header">
+        <h2 class="section-title">Mis gastos</h2>
+        <div class="lista-header__acciones">
+          <div class="filtro-miembro">
+            <label for="filtroMiembroDisplay">Ver gastos de:</label>
+            <div class="select-picker select-picker--filtro" id="filtroMiembroPicker">
+              <button type="button" class="select-picker__input" id="filtroMiembroDisplay">Todos</button>
+              <select id="filtroMiembro" hidden>
+                <option value="todos">Todos</option>
+                <option value="Mamá">Mamá</option>
+                <option value="Papá">Papá</option>
+                <option value="Hermano/a">Hermano/a</option>
+                <option value="Yo">Yo</option>
+              </select>
+              <div class="select-picker__panel" id="filtroMiembroPanel" hidden></div>
+            </div>
+          </div>
+          <button type="button" class="btn btn--ghost btn--small" id="btnRefrescar">
+            <span id="refrescarIcono">↻</span> Actualizar
+          </button>
+        </div>
+      </div>
       <div class="tabla-wrapper">
         <table class="tabla-gastos">
           <thead>
             <tr>
               <th>Descripción</th>
               <th>Categoría</th>
+              <th>Miembro</th>
               <th>Monto</th>
               <th>Fecha</th>
               <th>Acciones</th>
@@ -128,6 +194,8 @@
           </tbody>
         </table>
       </div>
+
+      <div class="paginacion" id="paginacionGastos"></div>
     </section>
 
   </main>
@@ -137,9 +205,9 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabaseClient.js"></script>
-  <script src="js/toast.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/app.js"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="toast.js"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
