@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ingresar — Gastos Familiares</title>
+  <title>Iniciar sesión · Gastos Familiares</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <style>
-    .login-wrapper {
+    .login-wrap {
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -15,135 +18,111 @@
     }
     .login-card {
       background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-top: 3px solid var(--color-accent);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      border: 1px solid var(--color-border);
-      padding: 2rem;
+      padding: 2rem 1.8rem;
       width: 100%;
       max-width: 380px;
     }
     .login-card h1 {
       font-family: var(--font-display);
+      font-size: 1.4rem;
       color: var(--color-primary-dark);
-      font-size: 1.5rem;
+      margin-bottom: 0.3rem;
       text-align: center;
-      margin-bottom: 1.5rem;
     }
-    .login-tabs {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.5rem;
-      border-bottom: 1px solid var(--color-border);
+    .login-card p.sub {
+      text-align: center;
+      color: var(--color-ink-light);
+      font-size: 0.85rem;
+      margin-bottom: 1.4rem;
     }
-    .login-tab {
-      flex: 1;
-      padding: 0.6rem;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: var(--color-text-light);
-      border-bottom: 2px solid transparent;
-      transition: color var(--transition), border-color var(--transition);
+    .login-swap {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--color-ink-light);
     }
-    .login-tab.active {
-      color: var(--color-primary-dark);
-      border-color: var(--color-secondary);
+    .login-swap a { color: var(--color-primary); font-weight: 600; cursor: pointer; text-decoration: underline; }
+    .login-msg {
+      display: none;
+      font-size: 0.82rem;
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
     }
-    .login-form { display: none; flex-direction: column; gap: 1rem; }
-    .login-form.active { display: flex; }
-    .login-form .btn { width: 100%; }
+    .login-msg.show { display: block; }
+    .login-msg--error { background: #fde2df; color: #8a2e22; }
+    .login-msg--ok { background: #e1efe3; color: #2f5c3a; }
   </style>
 </head>
 <body>
 
-  <div class="login-wrapper">
+  <div class="login-wrap">
     <div class="login-card">
       <h1>💰 Gastos Familiares</h1>
+      <p class="sub">Inicia sesión para ver tus gastos</p>
 
-      <div class="login-tabs">
-        <button type="button" class="login-tab active" id="tabIngresar">Iniciar sesión</button>
-        <button type="button" class="login-tab" id="tabRegistrar">Registrarse</button>
-      </div>
+      <div class="login-msg" id="loginMsg"></div>
 
-      <form id="formIngresar" class="login-form active">
+      <form id="formLogin" class="form-gasto">
         <div class="form-group">
-          <label for="emailIngresar">Correo</label>
-          <input type="email" id="emailIngresar" required placeholder="tucorreo@ejemplo.com" />
+          <label for="loginEmail">Correo electrónico</label>
+          <input type="email" id="loginEmail" required placeholder="tucorreo@ejemplo.com" />
         </div>
         <div class="form-group">
-          <label for="passwordIngresar">Contraseña</label>
-          <input type="password" id="passwordIngresar" required placeholder="••••••••" />
+          <label for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" />
         </div>
-        <button type="submit" class="btn btn--primary">Iniciar sesión</button>
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary" id="btnLogin">Entrar</button>
+        </div>
       </form>
-
-      <form id="formRegistrar" class="login-form">
-        <div class="form-group">
-          <label for="emailRegistrar">Correo</label>
-          <input type="email" id="emailRegistrar" required placeholder="tucorreo@ejemplo.com" />
-        </div>
-        <div class="form-group">
-          <label for="passwordRegistrar">Contraseña</label>
-          <input type="password" id="passwordRegistrar" required minlength="6" placeholder="Mínimo 6 caracteres" />
-        </div>
-        <button type="submit" class="btn btn--primary">Crear cuenta</button>
-      </form>
+      <p class="login-swap">¿No tienes cuenta? <a id="linkRegistro">Regístrate aquí</a></p>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabaseClient.js"></script>
-  <script src="toast.js"></script>
-  <script src="auth.js"></script>
   <script>
-    // Si ya hay sesión activa, mandar directo al dashboard
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.href = "index.html";
+    const formLogin = document.getElementById("formLogin");
+    const loginMsg = document.getElementById("loginMsg");
+    const btnLogin = document.getElementById("btnLogin");
+    const linkRegistro = document.getElementById("linkRegistro");
+    let modoRegistro = false;
+
+    function mostrarMsg(texto, ok) {
+      loginMsg.textContent = texto;
+      loginMsg.className = "login-msg show " + (ok ? "login-msg--ok" : "login-msg--error");
+    }
+
+    linkRegistro.addEventListener("click", () => {
+      modoRegistro = !modoRegistro;
+      btnLogin.textContent = modoRegistro ? "Crear cuenta" : "Entrar";
+      linkRegistro.parentElement.firstChild.textContent = modoRegistro ? "¿Ya tienes cuenta? " : "¿No tienes cuenta? ";
+      linkRegistro.textContent = modoRegistro ? "Inicia sesión" : "Regístrate aquí";
     });
 
-    const tabIngresar = document.getElementById("tabIngresar");
-    const tabRegistrar = document.getElementById("tabRegistrar");
-    const formIngresar = document.getElementById("formIngresar");
-    const formRegistrar = document.getElementById("formRegistrar");
-
-    tabIngresar.addEventListener("click", () => {
-      tabIngresar.classList.add("active");
-      tabRegistrar.classList.remove("active");
-      formIngresar.classList.add("active");
-      formRegistrar.classList.remove("active");
-    });
-
-    tabRegistrar.addEventListener("click", () => {
-      tabRegistrar.classList.add("active");
-      tabIngresar.classList.remove("active");
-      formRegistrar.classList.add("active");
-      formIngresar.classList.remove("active");
-    });
-
-    formIngresar.addEventListener("submit", async (e) => {
+    formLogin.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("emailIngresar").value.trim();
-      const password = document.getElementById("passwordIngresar").value;
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      btnLogin.disabled = true;
 
-      const { error } = await iniciarSesion(email, password);
-      if (error) return mostrarToast("Error al iniciar sesión: " + error.message, "error");
+      // Se llama directo a Supabase (no se usa auth.js aquí, para evitar
+      // el bucle de redirección que causaría su onAuthStateChange).
+      const resultado = modoRegistro
+        ? await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signInWithPassword({ email, password });
 
-      mostrarToast("Sesión iniciada", "exito");
-      window.location.href = "index.html";
-    });
-
-    formRegistrar.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("emailRegistrar").value.trim();
-      const password = document.getElementById("passwordRegistrar").value;
-
-      const { error } = await registrar(email, password);
-      if (error) return mostrarToast("Error al registrar: " + error.message, "error");
-
-      mostrarToast("Cuenta creada, ya puedes ingresar", "exito");
-      tabIngresar.click();
+      if (resultado.error) {
+        mostrarMsg(modoRegistro ? resultado.error.message : "Correo o contraseña incorrectos", false);
+        btnLogin.disabled = false;
+      } else {
+        window.location.href = "index.html";
+      }
     });
   </script>
 </body>
