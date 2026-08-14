@@ -12,6 +12,11 @@
       align-items: center;
       justify-content: center;
       padding: 1.5rem;
+      /* Oculto hasta confirmar que no hay sesión activa (evita el "flash" del formulario) */
+      visibility: hidden;
+    }
+    .login-wrapper.ready {
+      visibility: visible;
     }
     .login-card {
       background: var(--color-surface);
@@ -54,39 +59,62 @@
     .login-form { display: none; flex-direction: column; gap: 1rem; }
     .login-form.active { display: flex; }
     .login-form .btn { width: 100%; }
+    .login-form .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .forgot-link {
+      text-align: right;
+      margin-top: -0.5rem;
+    }
+    .forgot-link button {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.8rem;
+      color: var(--color-text-light);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .forgot-link button:hover {
+      color: var(--color-primary-dark);
+    }
   </style>
 </head>
 <body>
 
-  <div class="login-wrapper">
+  <div class="login-wrapper" id="loginWrapper">
     <div class="login-card">
       <h1>💰 Gastos Familiares</h1>
 
-      <div class="login-tabs">
-        <button type="button" class="login-tab active" id="tabIngresar">Iniciar sesión</button>
-        <button type="button" class="login-tab" id="tabRegistrar">Registrarse</button>
+      <div class="login-tabs" role="tablist">
+        <button type="button" class="login-tab active" id="tabIngresar" role="tab" aria-selected="true" aria-controls="formIngresar">Iniciar sesión</button>
+        <button type="button" class="login-tab" id="tabRegistrar" role="tab" aria-selected="false" aria-controls="formRegistrar">Registrarse</button>
       </div>
 
-      <form id="formIngresar" class="login-form active">
+      <form id="formIngresar" class="login-form active" role="tabpanel" aria-labelledby="tabIngresar">
         <div class="form-group">
           <label for="emailIngresar">Correo</label>
-          <input type="email" id="emailIngresar" required placeholder="tucorreo@ejemplo.com" />
+          <input type="email" id="emailIngresar" required placeholder="tucorreo@ejemplo.com" autocomplete="email" />
         </div>
         <div class="form-group">
           <label for="passwordIngresar">Contraseña</label>
-          <input type="password" id="passwordIngresar" required placeholder="••••••••" />
+          <input type="password" id="passwordIngresar" required placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="forgot-link">
+          <button type="button" id="btnOlvide">¿Olvidaste tu contraseña?</button>
         </div>
         <button type="submit" class="btn btn--primary">Iniciar sesión</button>
       </form>
 
-      <form id="formRegistrar" class="login-form">
+      <form id="formRegistrar" class="login-form" role="tabpanel" aria-labelledby="tabRegistrar">
         <div class="form-group">
           <label for="emailRegistrar">Correo</label>
-          <input type="email" id="emailRegistrar" required placeholder="tucorreo@ejemplo.com" />
+          <input type="email" id="emailRegistrar" required placeholder="tucorreo@ejemplo.com" autocomplete="email" />
         </div>
         <div class="form-group">
           <label for="passwordRegistrar">Contraseña</label>
-          <input type="password" id="passwordRegistrar" required minlength="6" placeholder="Mínimo 6 caracteres" />
+          <input type="password" id="passwordRegistrar" required minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
         </div>
         <button type="submit" class="btn btn--primary">Crear cuenta</button>
       </form>
@@ -98,18 +126,33 @@
   <script src="toast.js"></script>
   <script src="auth.js"></script>
   <script>
-  // Esperar a que todo el HTML esté cargado
+  // Diccionario simple para traducir los errores más comunes de Supabase
+  const MENSAJES_ERROR = {
+    "Invalid login credentials": "Correo o contraseña incorrectos",
+    "User already registered": "Ya existe una cuenta con ese correo",
+    "Email not confirmed": "Debés confirmar tu correo antes de iniciar sesión",
+    "Password should be at least 6 characters": "La contraseña debe tener al menos 6 caracteres"
+  };
+
+  function traducirError(mensaje) {
+    return MENSAJES_ERROR[mensaje] || mensaje;
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
 
+    const loginWrapper = document.getElementById("loginWrapper");
     const tabIngresar = document.getElementById("tabIngresar");
     const tabRegistrar = document.getElementById("tabRegistrar");
     const formIngresar = document.getElementById("formIngresar");
     const formRegistrar = document.getElementById("formRegistrar");
+    const btnOlvide = document.getElementById("btnOlvide");
 
     // BOTÓN INICIAR SESIÓN
     tabIngresar.addEventListener("click", () => {
       tabIngresar.classList.add("active");
+      tabIngresar.setAttribute("aria-selected", "true");
       tabRegistrar.classList.remove("active");
+      tabRegistrar.setAttribute("aria-selected", "false");
 
       formIngresar.classList.add("active");
       formRegistrar.classList.remove("active");
@@ -118,7 +161,9 @@
     // BOTÓN REGISTRARSE
     tabRegistrar.addEventListener("click", () => {
       tabRegistrar.classList.add("active");
+      tabRegistrar.setAttribute("aria-selected", "true");
       tabIngresar.classList.remove("active");
+      tabIngresar.setAttribute("aria-selected", "false");
 
       formRegistrar.classList.add("active");
       formIngresar.classList.remove("active");
@@ -130,12 +175,14 @@
 
       const email = document.getElementById("emailIngresar").value.trim();
       const password = document.getElementById("passwordIngresar").value;
+      const btn = formIngresar.querySelector("button[type=submit]");
 
+      btn.disabled = true;
       try {
         const { error } = await iniciarSesion(email, password);
 
         if (error) {
-          mostrarToast("Error al iniciar sesión: " + error.message, "error");
+          mostrarToast("Error al iniciar sesión: " + traducirError(error.message), "error");
           return;
         }
 
@@ -148,6 +195,8 @@
       } catch (error) {
         console.error(error);
         mostrarToast("Ocurrió un error al iniciar sesión", "error");
+      } finally {
+        btn.disabled = false;
       }
     });
 
@@ -157,18 +206,19 @@
 
       const email = document.getElementById("emailRegistrar").value.trim();
       const password = document.getElementById("passwordRegistrar").value;
+      const btn = formRegistrar.querySelector("button[type=submit]");
 
+      btn.disabled = true;
       try {
         const { error } = await registrar(email, password);
 
         if (error) {
-          mostrarToast("Error al registrar: " + error.message, "error");
+          mostrarToast("Error al registrar: " + traducirError(error.message), "error");
           return;
         }
 
         mostrarToast("Cuenta creada correctamente", "exito");
 
-        // Volver a iniciar sesión
         setTimeout(() => {
           tabIngresar.click();
         }, 500);
@@ -176,19 +226,59 @@
       } catch (error) {
         console.error(error);
         mostrarToast("Ocurrió un error al registrar la cuenta", "error");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ¿OLVIDASTE TU CONTRASEÑA?
+    btnOlvide.addEventListener("click", async () => {
+      const email = document.getElementById("emailIngresar").value.trim();
+
+      if (!email) {
+        mostrarToast("Escribí tu correo arriba primero", "error");
+        return;
+      }
+
+      // Requiere que supabaseClient.js exponga una función resetPassword(email)
+      // que internamente llame a supabase.auth.resetPasswordForEmail(email)
+      if (typeof resetPassword === "function") {
+        try {
+          const { error } = await resetPassword(email);
+          if (error) {
+            mostrarToast("No se pudo enviar el correo: " + traducirError(error.message), "error");
+            return;
+          }
+          mostrarToast("Te enviamos un correo para restablecer la contraseña", "exito");
+        } catch (error) {
+          console.error(error);
+          mostrarToast("Ocurrió un error al enviar el correo", "error");
+        }
+      } else {
+        mostrarToast("Función de recuperación no disponible todavía", "error");
       }
     });
 
     // COMPROBAR SI YA ESTÁ LOGUEADO
+    // Nota: si supabaseClient.js define "supabase" como el cliente,
+    // considerá renombrarlo a "supabaseClient" para evitar pisar el
+    // global que crea la librería @supabase/supabase-js.
     if (typeof supabase !== "undefined") {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
           window.location.href = "index.html";
+          return;
         }
+        loginWrapper.classList.add("ready");
+      }).catch(() => {
+        loginWrapper.classList.add("ready");
       });
+    } else {
+      loginWrapper.classList.add("ready");
     }
 
   });
-</script>
-  
-    
+  </script>
+
+</body>
+</html>
