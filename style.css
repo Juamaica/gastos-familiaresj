@@ -114,6 +114,7 @@ body {
 
 .nav {
   display: flex;
+  align-items: center;
   gap: 1.5rem;
 }
 
@@ -125,12 +126,27 @@ body {
   padding-bottom: 0.2rem;
   border-bottom: 2px solid transparent;
   transition: color var(--transition), border-color var(--transition);
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .nav__link:hover,
 .nav__link.active {
   color: var(--color-primary);
   border-color: var(--color-secondary);
+}
+
+.nav__link--logout {
+  color: var(--color-danger);
+}
+
+.nav__link--logout:hover {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
 }
 
 /* Hamburguesa (oculta en escritorio) */
@@ -387,6 +403,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  min-width: 0; /* evita que el input empuje el ancho de su columna en el grid */
 }
 
 .form-group label {
@@ -397,6 +414,7 @@ body {
 
 .form-group input,
 .form-group select {
+  width: 100%; /* fuerza a que ambos inputs midan lo mismo que su columna */
   padding: 0.65rem 0.75rem;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -495,6 +513,7 @@ body {
     right: 0;
     background: var(--color-surface);
     flex-direction: column;
+    align-items: stretch;
     gap: 0;
     max-height: 0;
     overflow: hidden;
@@ -509,6 +528,8 @@ body {
   .nav__link {
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    width: 100%;
   }
 
   .stats-grid {
