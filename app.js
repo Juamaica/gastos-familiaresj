@@ -16,18 +16,6 @@ const CATEGORIAS = [
 let familiaId = null;
 let editando = false;
 
-// ---------- TOAST (notificaciones) ----------
-function mostrarToast(mensaje, tipo) {
-  const toast = document.createElement("div");
-  toast.className = `toast toast--${tipo === "error" ? "error" : "exito"}`;
-  toast.textContent = mensaje;
-  document.body.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 3000);
-}
-
 // ---------- PROTECCIÓN DE SESIÓN ----------
 async function verificarSesion() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -272,4 +260,37 @@ function pintarStats(gastos) {
 }
 
 function pintarCategorias(gastos) {
-  const contenedor = document.getElementById("categoriasConta
+  const contenedor = document.getElementById("categoriasContainer");
+  contenedor.innerHTML = "";
+
+  const total = gastos.reduce((sum, g) => sum + Number(g.monto), 0);
+
+  const totalesPorCategoria = {};
+  CATEGORIAS.forEach((cat) => (totalesPorCategoria[cat] = 0));
+  gastos.forEach((g) => {
+    totalesPorCategoria[g.categoria] = (totalesPorCategoria[g.categoria] || 0) + Number(g.monto);
+  });
+
+  Object.entries(totalesPorCategoria).forEach(([cat, valor]) => {
+    const porcentaje = total > 0 ? (valor / total) * 100 : 0;
+
+    const bar = document.createElement("div");
+    bar.className = "categoria-bar";
+    bar.innerHTML = `
+      <div class="categoria-bar__label">
+        <span>${cat}</span>
+        <span>Bs. ${valor.toFixed(2)}</span>
+      </div>
+      <div class="categoria-bar__track">
+        <div class="categoria-bar__fill" style="width: ${porcentaje}%"></div>
+      </div>
+    `;
+    contenedor.appendChild(bar);
+  });
+}
+
+// ---------- INICIO ----------
+verificarSesion();
+document.getElementById("fecha").valueAsDate = new Date();
+cargarFamilia();
+cargarGastos();
