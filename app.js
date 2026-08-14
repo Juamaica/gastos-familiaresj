@@ -76,7 +76,7 @@ document.getElementById("inputFoto").addEventListener("change", async (e) => {
     .upload(nombreArchivo, file, { upsert: true });
 
   if (uploadError) {
-    alert("Error al subir la foto: " + uploadError.message);
+    mostrarToast("Error al subir la foto: " + uploadError.message, "error");
     return;
   }
 
@@ -92,7 +92,7 @@ document.getElementById("inputFoto").addEventListener("change", async (e) => {
     .eq("id", familiaId);
 
   if (updateError) {
-    alert("Error al guardar la foto: " + updateError.message);
+    mostrarToast("Error al guardar la foto: " + updateError.message, "error");
     return;
   }
 
@@ -116,13 +116,14 @@ form.addEventListener("submit", async (e) => {
   if (editando) {
     const id = document.getElementById("gastoId").value;
     const { error } = await supabase.from("gastos").update(gasto).eq("id", id);
-    if (error) return alert("Error al actualizar: " + error.message);
+    if (error) return mostrarToast("Error al actualizar: " + error.message, "error");
   } else {
     const { error } = await supabase.from("gastos").insert([gasto]);
-    if (error) return alert("Error al guardar: " + error.message);
+    if (error) return mostrarToast("Error al guardar: " + error.message, "error");
   }
 
   resetForm();
+  mostrarToast("Gasto guardado correctamente", "exito");
   await cargarGastos();
 });
 
@@ -177,7 +178,7 @@ function pintarTabla(gastos) {
 
 window.editarGasto = async function (id) {
   const { data, error } = await supabase.from("gastos").select("*").eq("id", id).single();
-  if (error) return alert("Error: " + error.message);
+  if (error) return mostrarToast("Error: " + error.message, "error");
 
   document.getElementById("gastoId").value = data.id;
   document.getElementById("descripcion").value = data.descripcion;
@@ -195,7 +196,7 @@ window.eliminarGasto = async function (id) {
   if (!confirm("¿Seguro que deseas eliminar este gasto?")) return;
 
   const { error } = await supabase.from("gastos").delete().eq("id", id);
-  if (error) return alert("Error al eliminar: " + error.message);
+  if (error) return mostrarToast("Error al eliminar: " + error.message, "error");
 
   await cargarGastos();
 };
