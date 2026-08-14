@@ -16,6 +16,26 @@ const CATEGORIAS = [
 let familiaId = null;
 let editando = false;
 
+// ---------- PROTECCIÓN DE SESIÓN ----------
+async function verificarSesion() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = "login.html"; // ajusta el nombre de tu página de login
+  }
+}
+
+// ---------- CERRAR SESIÓN ----------
+document.getElementById("btnLogout").addEventListener("click", async () => {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    mostrarToast("Error al cerrar sesión: " + error.message, "error");
+    return;
+  }
+
+  window.location.href = "login.html"; // ajusta el nombre de tu página de login
+});
+
 // ---------- MENÚ HAMBURGUESA ----------
 const hamburgerBtn = document.getElementById("hamburgerBtn");
 const navMenu = document.getElementById("navMenu");
@@ -270,6 +290,7 @@ function pintarCategorias(gastos) {
 }
 
 // ---------- INICIO ----------
+verificarSesion();
 document.getElementById("fecha").valueAsDate = new Date();
 cargarFamilia();
 cargarGastos();
