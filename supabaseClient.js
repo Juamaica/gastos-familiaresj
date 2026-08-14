@@ -8,8 +8,8 @@
 // =========================================================
 
 (function () {
-  const SUPABASE_URL = "sb_publishable_w9jMwlpfxl_4Vs6jOWOGKA__JW_a0z6";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjbWdjeHd6dXhqc2Fod2pnb2hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NTYwNTcsImV4cCI6MjEwMjIzMjA1N30.oDc3GdfW6d1pLxY91mw5I4_Gh6yNOkjIkWuoI5sT6gw";
+  const SUPABASE_URL = "sb_publishable_K8NMIfm6yNlfR5N2C8h8yw_0DVsA7W-";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkZ2R4eGFmeWx5b3lkdmhwbGhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NjQ3NjIsImV4cCI6MjEwMjI0MDc2Mn0.Dgdz9s1N4sJ-8IW8R_md2HqnXa9pfQthwP0uxZYqY5s";
 
   window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 })();
