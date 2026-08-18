@@ -15,12 +15,25 @@ const CATEGORIAS = [
 
 let familiaId = null;
 let editando = false;
+let gastosCache = [];
+
+// ---------- TOAST (notificaciones) ----------
+function mostrarToast(mensaje, tipo) {
+  const toast = document.createElement("div");
+  toast.className = `toast toast--${tipo === "error" ? "error" : "exito"}`;
+  toast.textContent = mensaje;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
 
 // ---------- PROTECCIÓN DE SESIÓN ----------
 async function verificarSesion() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    window.location.href = "login.html"; // ajusta el nombre de tu página de login
+    window.location.href = "login.html";
   }
 }
 
@@ -33,7 +46,13 @@ document.getElementById("btnLogout").addEventListener("click", async () => {
     return;
   }
 
-  window.location.href = "login.html"; // ajusta el nombre de tu página de login
+  window.location.href = "login.html";
+});
+
+// ---------- ACTUALIZAR LISTA DE GASTOS ----------
+document.getElementById("btnActualizarGastos").addEventListener("click", async () => {
+  await cargarGastos();
+  mostrarToast("Lista actualizada", "exito");
 });
 
 // ---------- MENÚ HAMBURGUESA ----------
@@ -138,16 +157,32 @@ form.addEventListener("submit", async (e) => {
 
   if (editando) {
     const id = document.getElementById("gastoId").value;
-    const { error } = await supabase.from("gastos").update(gasto).eq("id", id);
+    const { data, error } = await supabase
+      .from("gastos")
+      .update(gasto)
+      .eq("id", id)
+      .select()
+      .single();
+
     if (error) return mostrarToast("Error al actualizar: " + error.message, "error");
+
+    const idx = gastosCache.findIndex((g) => g.id === id);
+    if (idx !== -1) gastosCache[idx] = data;
   } else {
-    const { error } = await supabase.from("gastos").insert([gasto]);
+    const { data, error } = await supabase
+      .from("gastos")
+      .insert([gasto])
+      .select()
+      .single();
+
     if (error) return mostrarToast("Error al guardar: " + error.message, "error");
+
+    gastosCache.unshift(data);
   }
 
   resetForm();
   mostrarToast("Gasto guardado correctamente", "exito");
-  await cargarGastos();
+  renderGastos();
 });
 
 btnCancelar.addEventListener("click", resetForm);
@@ -172,9 +207,14 @@ async function cargarGastos() {
     return;
   }
 
-  pintarTabla(data);
-  pintarStats(data);
-  pintarCategorias(data);
+  gastosCache = data;
+  renderGastos();
+}
+
+function renderGastos() {
+  pintarTabla(gastosCache);
+  pintarStats(gastosCache);
+  pintarCategorias(gastosCache);
 }
 
 function pintarTabla(gastos) {
@@ -200,14 +240,14 @@ function pintarTabla(gastos) {
 }
 
 window.editarGasto = async function (id) {
-  const { data, error } = await supabase.from("gastos").select("*").eq("id", id).single();
-  if (error) return mostrarToast("Error: " + error.message, "error");
+  const registro = gastosCache.find((g) => g.id === id);
+  if (!registro) return mostrarToast("No se encontró el gasto", "error");
 
-  document.getElementById("gastoId").value = data.id;
-  document.getElementById("descripcion").value = data.descripcion;
-  document.getElementById("monto").value = data.monto;
-  document.getElementById("categoria").value = data.categoria;
-  document.getElementById("fecha").value = data.fecha;
+  document.getElementById("gastoId").value = registro.id;
+  document.getElementById("descripcion").value = registro.descripcion;
+  document.getElementById("monto").value = registro.monto;
+  document.getElementById("categoria").value = registro.categoria;
+  document.getElementById("fecha").value = registro.fecha;
 
   editando = true;
   btnCancelar.hidden = false;
@@ -221,7 +261,9 @@ window.eliminarGasto = async function (id) {
   const { error } = await supabase.from("gastos").delete().eq("id", id);
   if (error) return mostrarToast("Error al eliminar: " + error.message, "error");
 
-  await cargarGastos();
+  gastosCache = gastosCache.filter((g) => g.id !== id);
+  renderGastos();
+  mostrarToast("Gasto eliminado", "exito");
 };
 
 // ---------- DASHBOARD: ESTADÍSTICAS ----------
